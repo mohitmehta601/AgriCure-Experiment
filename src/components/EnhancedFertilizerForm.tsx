@@ -296,53 +296,6 @@ const EnhancedFertilizerForm = ({ onSubmit, user }: EnhancedFertilizerFormProps)
           </div>
 
           {/* Basic Field Information */}
-          <div className="space-y-4">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center space-x-2">
-              <Leaf className="h-4 w-4 sm:h-5 sm:w-5 text-grass-600" />
-              <span>{t('form.fieldInfo')}</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="fieldName" className="text-sm sm:text-base font-medium text-gray-700">{t('form.fieldName')} *</Label>
-                <Input
-                  id="fieldName"
-                  placeholder="e.g., North Field"
-                  value={formData.fieldName}
-                  onChange={(e) => handleChange("fieldName", e.target.value)}
-                  required
-                  className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label htmlFor="fieldSize" className="text-sm sm:text-base font-medium text-gray-700">{t('form.fieldSize')} *</Label>
-                  <Input
-                    id="fieldSize"
-                    type="number"
-                    step="0.1"
-                    placeholder="e.g., 2.5"
-                    value={formData.fieldSize}
-                    onChange={(e) => handleChange("fieldSize", e.target.value)}
-                    required
-                    className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sizeUnit" className="text-sm sm:text-base font-medium text-gray-700">Unit</Label>
-                  <Select onValueChange={(value) => handleChange("sizeUnit", value)} value={formData.sizeUnit}>
-                    <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hectares">Hectares</SelectItem>
-                      <SelectItem value="acres">Acres</SelectItem>
-                      <SelectItem value="bigha">Bigha</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Crop and Soil Type */}
           <div className="space-y-4">
