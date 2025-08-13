@@ -346,9 +346,12 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
             <div className="flex items-center space-x-2">
               <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-grass-600 animate-pulse" />
               <span className="text-lg sm:text-2xl font-bold text-grass-700">{Math.round(shiPercent)}%</span>
-              {(() => { const c = classifySHI(shiPercent); return (
-                <span className={`ml-2 text-xs px-2 py-0.5 rounded border ${c.color}`}>{c.label}</span>
-              ); })()}
+              {(() => { 
+                const c = classifySHI(shiPercent); 
+                return (
+                  <span className={`ml-2 text-xs px-2 py-0.5 rounded border ${c.color}`}>{c.label}</span>
+                ); 
+              })()}
             </div>
             <Progress value={shiPercent} className="mt-2 h-2 bg-grass-100" />
           </CardContent>
@@ -408,9 +411,12 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
                 <span className="text-sm text-green-600 font-semibold">{realTimeData?.nitrogen.toFixed(1)} mg/kg</span>
               </div>
               <Progress value={clampPercent(((realTimeData?.nitrogen ?? 0) / 240) * 100)} className="h-2 bg-green-100" />
-              {(() => { const s = getNutrientStatus('nitrogen', realTimeData?.nitrogen ?? 0); return (
-                <div className={`text-xs ${s.color}`}>{s.status.toUpperCase()}</div>
-              ); })()}
+              {(() => { 
+                const s = getNutrientStatus('nitrogen', realTimeData?.nitrogen ?? 0); 
+                return (
+                  <div className={`text-xs ${s.color}`}>{s.status.toUpperCase()}</div>
+                ); 
+              })()}
             </div>
             <div className="space-y-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
               <div className="flex justify-between">
@@ -418,9 +424,12 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
                 <span className="text-sm text-blue-600 font-semibold">{realTimeData?.phosphorus.toFixed(1)} mg/kg</span>
               </div>
               <Progress value={clampPercent(((realTimeData?.phosphorus ?? 0) / 400) * 100)} className="h-2 bg-blue-100" />
-              {(() => { const s = getNutrientStatus('phosphorus', realTimeData?.phosphorus ?? 0); return (
-                <div className={`text-xs ${s.color}`}>{s.status.toUpperCase()}</div>
-              ); })()}
+              {(() => { 
+                const s = getNutrientStatus('phosphorus', realTimeData?.phosphorus ?? 0); 
+                return (
+                  <div className={`text-xs ${s.color}`}>{s.status.toUpperCase()}</div>
+                ); 
+              })()}
             </div>
             <div className="space-y-2 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
               <div className="flex justify-between">
@@ -428,9 +437,12 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
                 <span className="text-sm text-yellow-600 font-semibold">{realTimeData?.potassium.toFixed(1)} mg/kg</span>
               </div>
               <Progress value={clampPercent(((realTimeData?.potassium ?? 0) / 400) * 100)} className="h-2 bg-yellow-100" />
-              {(() => { const s = getNutrientStatus('potassium', realTimeData?.potassium ?? 0); return (
-                <div className={`text-xs ${s.color}`}>{s.status.toUpperCase()}</div>
-              ); })()}
+              {(() => { 
+                const s = getNutrientStatus('potassium', realTimeData?.potassium ?? 0); 
+                return (
+                  <div className={`text-xs ${s.color}`}>{s.status.toUpperCase()}</div>
+                ); 
+              })()}
             </div>
           </div>
           <div className="mt-4 text-xs text-gray-500 flex items-center space-x-2">
@@ -455,7 +467,7 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
               className="bg-grass-600 hover:bg-grass-700 transition-all duration-300 hover:scale-105"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {t('dashboard.addFarm') || 'Add Farm'}
+              {t('dashboard.addFarm')}
             </Button>
           </div>
         </CardHeader>
@@ -468,7 +480,7 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
           ) : farms.length === 0 ? (
             <div className="text-center py-8 text-sm text-gray-600">
               <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p>{t('dashboard.noFarmsYet') || 'No farms added yet.'}</p>
+              <p>{t('dashboard.noFarmsYet')}</p>
               <p className="text-xs text-gray-500 mt-2">Click "Add Farm" to get started</p>
             </div>
           ) : (
@@ -680,8 +692,6 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
               ) : (
                 t('common.delete')
               )}
-            </AlertDialogAction>
-              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
