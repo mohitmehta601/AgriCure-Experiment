@@ -292,32 +292,11 @@ const Dashboard = () => {
       navigate('/recommendations', {
         state: {
           recommendations: enhancedRecommendations,
-    
-    // Get selected farm data
-    const selectedFarm = farms.find(farm => farm.id === selectedFarmId);
-    if (!selectedFarm) {
-      toast({
-        title: "Error",
-        description: "Please select a farm first",
-        variant: "destructive"
-      });
-      return;
-    }
-    
           formData: data
         }
       });
     } catch (error) {
-      // Create complete form data using selected farm info
-      const completeFormData = {
-        ...formData,
-        fieldName: selectedFarm.name,
-        fieldSize: selectedFarm.size.toString(),
-        sizeUnit: selectedFarm.unit,
-        cropType: getCropTypeOptions().find(opt => opt.label === selectedFarm.crop_type)?.value || "",
-        soilType: getSoilTypeOptions().find(opt => opt.label === selectedFarm.soil_type)?.value || ""
-      };
-      onSubmit(completeFormData);
+      console.error('Error generating recommendations:', error);
       toast({
         title: "Error",
         description: "Failed to generate recommendations",
