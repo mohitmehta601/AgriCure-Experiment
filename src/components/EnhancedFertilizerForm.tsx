@@ -4,11 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { getCropTypeOptions, getSoilTypeOptions } from "@/services/fertilizerMLService";
-import { Sparkles, Leaf, Zap } from "lucide-react";
+import { Sparkles, Leaf, Zap, Plus, MapPin } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRealTimeData } from "@/contexts/RealTimeDataContext";
+import { useEffect } from "react";
+import { farmService, type Farm, type CreateFarmData } from "@/services/farmService";
 
 interface FormData {
   fieldName: string;
@@ -27,9 +30,10 @@ interface FormData {
 
 interface EnhancedFertilizerFormProps {
   onSubmit: (data: FormData) => void;
+  user?: any;
 }
 
-const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
+const EnhancedFertilizerForm = ({ onSubmit, user }: EnhancedFertilizerFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     fieldName: "",
     fieldSize: "",
@@ -45,9 +49,129 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
     soilMoisture: ""
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [farms, setFarms] = useState<Farm[]>([]);
+  const [selectedFarmId, setSelectedFarmId] = useState<string>("");
+  const [isAddFarmOpen, setIsAddFarmOpen] = useState(false);
+  const [newFarm, setNewFarm] = useState({
+    name: '',
+    size: '',
+    unit: 'hectares',
+    cropType: '',
+    soilType: '',
+    location: ''
+  });
+  const [savingFarm, setSavingFarm] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
   const { realTimeData, isConnected } = useRealTimeData();
+
+  useEffect(() => {
+    if (user?.id) {
+      loadFarms();
+    }
+  }, [user]);
+
+  const loadFarms = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await farmService.getFarmsByUser(user.id);
+      if (error) throw error;
+      setFarms(data || []);
+    } catch (error) {
+      console.error('Error loading farms:', error);
+    }
+  };
+
+  const handleFarmSelection = (farmId: string) => {
+    setSelectedFarmId(farmId);
+    
+    if (farmId === "new") {
+      // Reset form for new farm
+      setFormData({
+        fieldName: "",
+        fieldSize: "",
+        sizeUnit: "hectares",
+        cropType: "",
+        soilPH: "",
+        nitrogen: "",
+        phosphorus: "",
+        potassium: "",
+        soilType: "",
+        temperature: "",
+        humidity: "",
+        soilMoisture: ""
+      });
+    } else {
+      // Pre-fill form with selected farm data
+      const selectedFarm = farms.find(farm => farm.id === farmId);
+      if (selectedFarm) {
+        setFormData(prev => ({
+          ...prev,
+          fieldName: selectedFarm.name,
+          fieldSize: selectedFarm.size.toString(),
+          sizeUnit: selectedFarm.unit,
+          cropType: getCropTypeOptions().find(opt => opt.label === selectedFarm.crop_type)?.value || "",
+          soilType: getSoilTypeOptions().find(opt => opt.label === selectedFarm.soil_type)?.value || ""
+        }));
+      }
+    }
+  };
+
+  const handleAddNewFarm = async () => {
+    if (!user?.id) return;
+    
+    const sizeNum = parseFloat(newFarm.size);
+    if (!newFarm.name.trim() || isNaN(sizeNum) || sizeNum <= 0 || !newFarm.cropType || !newFarm.soilType) {
+      toast({
+        title: t('common.error'),
+        description: 'Please fill in all required fields with valid values',
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setSavingFarm(true);
+    try {
+      const farmData: CreateFarmData = {
+        user_id: user.id,
+        name: newFarm.name.trim(),
+        size: sizeNum,
+        unit: newFarm.unit as any,
+        crop_type: newFarm.cropType,
+        soil_type: newFarm.soilType,
+        location: newFarm.location.trim() || undefined
+      };
+      
+      const { data, error } = await farmService.createFarm(farmData);
+      if (error) throw error;
+      
+      toast({
+        title: t('common.success'),
+        description: `Farm "${newFarm.name.trim()}" added successfully`,
+      });
+      
+      // Reload farms and select the new one
+      await loadFarms();
+      if (data) {
+        handleFarmSelection(data.id);
+      }
+      
+      // Close dialog and reset form
+      setIsAddFarmOpen(false);
+      setNewFarm({ name: '', size: '', unit: 'hectares', cropType: '', soilType: '', location: '' });
+    } catch (error) {
+      console.error('Error adding farm:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast({
+        title: t('common.error'),
+        description: `Failed to add farm: ${errorMessage}`,
+        variant: "destructive"
+      });
+    } finally {
+      setSavingFarm(false);
+    }
+  };
 
   const handleChange = (name: string, value: string) => {
     setFormData(prev => ({
@@ -101,6 +225,7 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
   const soilOptions = getSoilTypeOptions();
 
   return (
+    <>
     <Card className="w-full border-0 shadow-xl bg-gradient-to-br from-white to-gray-50 hover:shadow-2xl transition-all duration-500">
       <CardHeader className="px-4 sm:px-6 bg-gradient-to-r from-grass-50 to-green-50 rounded-t-lg">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
@@ -127,6 +252,49 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
       </CardHeader>
       <CardContent className="px-4 sm:px-6 py-6">
         <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          {/* Farm Selection */}
+          <div className="space-y-4 p-4 bg-gradient-to-r from-grass-50 to-green-50 rounded-lg border border-grass-200">
+            <h3 className="text-base sm:text-lg font-semibold text-grass-800 flex items-center space-x-2">
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-grass-600" />
+              <span>Select Farm or Add New</span>
+            </h3>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Select onValueChange={handleFarmSelection} value={selectedFarmId}>
+                  <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
+                    <SelectValue placeholder="Select an existing farm or add new" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new" className="font-medium text-grass-700">
+                      <div className="flex items-center space-x-2">
+                        <Plus className="h-4 w-4" />
+                        <span>Add New Farm</span>
+                      </div>
+                    </SelectItem>
+                    {farms.map((farm) => (
+                      <SelectItem key={farm.id} value={farm.id} className="hover:bg-grass-50 transition-colors duration-200">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{farm.name}</span>
+                          <span className="text-xs text-gray-500">{farm.size} {farm.unit} • {farm.crop_type}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsAddFarmOpen(true)}
+                className="bg-white hover:bg-grass-50 border-grass-300 text-grass-700 hover:text-grass-800 transition-all duration-300"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Farm
+              </Button>
+            </div>
+          </div>
+
           {/* Basic Field Information */}
           <div className="space-y-4">
             <h3 className="text-base sm:text-lg font-semibold text-gray-800 flex items-center space-x-2">
@@ -161,7 +329,7 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sizeUnit" className="text-sm sm:text-base font-medium text-gray-700">Unit</Label>
-                  <Select onValueChange={(value) => handleChange("sizeUnit", value)} defaultValue="hectares">
+                  <Select onValueChange={(value) => handleChange("sizeUnit", value)} value={formData.sizeUnit}>
                     <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
                       <SelectValue />
                     </SelectTrigger>
@@ -182,7 +350,7 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="cropType" className="text-sm sm:text-base font-medium text-gray-700">{t('form.cropType')} *</Label>
-                <Select onValueChange={(value) => handleChange("cropType", value)}>
+                <Select onValueChange={(value) => handleChange("cropType", value)} value={formData.cropType}>
                   <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
                     <SelectValue placeholder="Select crop type" />
                   </SelectTrigger>
@@ -197,7 +365,7 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="soilType" className="text-sm sm:text-base font-medium text-gray-700">{t('form.soilType')} *</Label>
-                <Select onValueChange={(value) => handleChange("soilType", value)}>
+                <Select onValueChange={(value) => handleChange("soilType", value)} value={formData.soilType}>
                   <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
                     <SelectValue placeholder="Select soil type" />
                   </SelectTrigger>
@@ -346,20 +514,23 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
               type="reset" 
               variant="outline"
               className="flex-1 sm:flex-none text-sm sm:text-base py-2 sm:py-3 transition-all duration-300 hover:scale-105 border-grass-300 hover:bg-grass-50"
-              onClick={() => setFormData({
-                fieldName: "",
-                fieldSize: "",
-                sizeUnit: "hectares",
-                cropType: "",
-                soilPH: "",
-                nitrogen: "",
-                phosphorus: "",
-                potassium: "",
-                soilType: "",
-                temperature: "",
-                humidity: "",
-                soilMoisture: ""
-              })}
+              onClick={() => {
+                setFormData({
+                  fieldName: "",
+                  fieldSize: "",
+                  sizeUnit: "hectares",
+                  cropType: "",
+                  soilPH: "",
+                  nitrogen: "",
+                  phosphorus: "",
+                  potassium: "",
+                  soilType: "",
+                  temperature: "",
+                  humidity: "",
+                  soilMoisture: ""
+                });
+                setSelectedFarmId("");
+              }}
             >
               {t('form.reset')}
             </Button>
@@ -367,6 +538,127 @@ const EnhancedFertilizerForm = ({ onSubmit }: EnhancedFertilizerFormProps) => {
         </form>
       </CardContent>
     </Card>
+
+    {/* Add New Farm Dialog */}
+    <Dialog open={isAddFarmOpen} onOpenChange={setIsAddFarmOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <Plus className="h-5 w-5 text-grass-600" />
+            <span>Add New Farm</span>
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-sm">Farm Name *</Label>
+            <Input 
+              value={newFarm.name} 
+              onChange={(e) => setNewFarm(v => ({ ...v, name: e.target.value }))} 
+              placeholder="e.g., North Field"
+              maxLength={100}
+              className="transition-all duration-300 focus:ring-2 focus:ring-grass-500"
+            />
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-sm">Farm Size *</Label>
+              <Input 
+                type="number" 
+                step="0.1"
+                min="0.1"
+                value={newFarm.size} 
+                onChange={(e) => setNewFarm(v => ({ ...v, size: e.target.value }))} 
+                placeholder="0.0"
+                className="transition-all duration-300 focus:ring-2 focus:ring-grass-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Unit</Label>
+              <Select 
+                value={newFarm.unit} 
+                onValueChange={(val) => setNewFarm(v => ({ ...v, unit: val }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="hectares">Hectares</SelectItem>
+                  <SelectItem value="acres">Acres</SelectItem>
+                  <SelectItem value="bigha">Bigha</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label className="text-sm">Crop Type *</Label>
+              <Select 
+                value={newFarm.cropType} 
+                onValueChange={(val) => setNewFarm(v => ({ ...v, cropType: val }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select crop" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {getCropTypeOptions().map(opt => (
+                    <SelectItem key={opt.value} value={opt.label}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm">Soil Type *</Label>
+              <Select 
+                value={newFarm.soilType} 
+                onValueChange={(val) => setNewFarm(v => ({ ...v, soilType: val }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select soil" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getSoilTypeOptions().map(opt => (
+                    <SelectItem key={opt.value} value={opt.label}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm">Location (Optional)</Label>
+            <Input 
+              value={newFarm.location} 
+              onChange={(e) => setNewFarm(v => ({ ...v, location: e.target.value }))} 
+              placeholder="e.g., Village, District, State"
+              maxLength={200}
+              className="transition-all duration-300 focus:ring-2 focus:ring-grass-500"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="secondary" onClick={() => setIsAddFarmOpen(false)} disabled={savingFarm}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddNewFarm} disabled={savingFarm} className="bg-grass-600 hover:bg-grass-700">
+              {savingFarm ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Saving...
+                </div>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Farm
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 };
 
