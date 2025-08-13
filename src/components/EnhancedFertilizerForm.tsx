@@ -112,8 +112,21 @@ const EnhancedFertilizerForm = ({ onSubmit, user }: EnhancedFertilizerFormProps)
           fieldSize: selectedFarm.size.toString(),
           sizeUnit: selectedFarm.unit,
           cropType: getCropTypeOptions().find(opt => opt.label === selectedFarm.crop_type)?.value || "",
-          soilType: getSoilTypeOptions().find(opt => opt.label === selectedFarm.soil_type)?.value || ""
+          soilType: getSoilTypeOptions().find(opt => opt.label === selectedFarm.soil_type)?.value || "",
+          // Keep existing sensor data if already filled
+          soilPH: prev.soilPH,
+          nitrogen: prev.nitrogen,
+          phosphorus: prev.phosphorus,
+          potassium: prev.potassium,
+          temperature: prev.temperature,
+          humidity: prev.humidity,
+          soilMoisture: prev.soilMoisture
         }));
+        
+        toast({
+          title: "Farm Data Loaded",
+          description: `Pre-filled form with data from "${selectedFarm.name}"`,
+        });
       }
     }
   };
@@ -296,6 +309,53 @@ const EnhancedFertilizerForm = ({ onSubmit, user }: EnhancedFertilizerFormProps)
           </div>
 
           {/* Basic Field Information */}
+          <div className="space-y-4 p-4 bg-gradient-to-r from-grass-50 to-green-50 rounded-lg border border-grass-200">
+            <h3 className="text-base sm:text-lg font-semibold text-grass-800 flex items-center space-x-2">
+              <Leaf className="h-4 w-4 sm:h-5 sm:w-5 text-grass-600" />
+              <span>{t('form.basicFieldInfo')}</span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="fieldName" className="text-sm sm:text-base font-medium text-grass-700">{t('form.fieldName')} *</Label>
+                <Input
+                  id="fieldName"
+                  type="text"
+                  placeholder="e.g., North Field"
+                  value={formData.fieldName}
+                  onChange={(e) => handleChange("fieldName", e.target.value)}
+                  required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fieldSize" className="text-sm sm:text-base font-medium text-grass-700">{t('form.fieldSize')} *</Label>
+                <Input
+                  id="fieldSize"
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  placeholder="e.g., 2.5"
+                  value={formData.fieldSize}
+                  onChange={(e) => handleChange("fieldSize", e.target.value)}
+                  required
+                  className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="sizeUnit" className="text-sm sm:text-base font-medium text-grass-700">{t('form.unit')}</Label>
+                <Select onValueChange={(value) => handleChange("sizeUnit", value)} value={formData.sizeUnit}>
+                  <SelectTrigger className="transition-all duration-300 focus:ring-2 focus:ring-grass-500 focus:border-grass-500 hover:border-grass-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hectares" className="hover:bg-grass-50 transition-colors duration-200">Hectares</SelectItem>
+                    <SelectItem value="acres" className="hover:bg-grass-50 transition-colors duration-200">Acres</SelectItem>
+                    <SelectItem value="bigha" className="hover:bg-grass-50 transition-colors duration-200">Bigha</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
           {/* Crop and Soil Type */}
           <div className="space-y-4">
