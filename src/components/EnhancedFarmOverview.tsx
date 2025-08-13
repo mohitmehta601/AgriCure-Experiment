@@ -129,10 +129,10 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
     if (!user?.id) return;
     
     const sizeNum = parseFloat(newFarm.size);
-    if (!newFarm.name || isNaN(sizeNum) || !newFarm.cropType || !newFarm.soilType) {
+    if (!newFarm.name.trim() || isNaN(sizeNum) || sizeNum <= 0 || !newFarm.cropType || !newFarm.soilType) {
       toast({
         title: t('common.error'),
-        description: 'Please fill in all required fields',
+        description: 'Please fill in all required fields with valid values',
         variant: "destructive"
       });
       return;
@@ -143,12 +143,12 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
       if (editingFarm) {
         // Update existing farm
         const updateData: UpdateFarmData = {
-          name: newFarm.name,
+          name: newFarm.name.trim(),
           size: sizeNum,
           unit: newFarm.unit as any,
           crop_type: newFarm.cropType,
           soil_type: newFarm.soilType,
-          location: newFarm.location || undefined
+          location: newFarm.location.trim() || undefined
         };
         
         const { data, error } = await farmService.updateFarm(editingFarm.id, updateData);
@@ -156,18 +156,18 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
         
         toast({
           title: t('common.success'),
-          description: 'Farm updated successfully',
+          description: `Farm "${newFarm.name.trim()}" updated successfully`,
         });
       } else {
         // Create new farm
         const farmData: CreateFarmData = {
           user_id: user.id,
-          name: newFarm.name,
+          name: newFarm.name.trim(),
           size: sizeNum,
           unit: newFarm.unit as any,
           crop_type: newFarm.cropType,
           soil_type: newFarm.soilType,
-          location: newFarm.location || undefined
+          location: newFarm.location.trim() || undefined
         };
         
         const { data, error } = await farmService.createFarm(farmData);
@@ -175,7 +175,7 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
         
         toast({
           title: t('common.success'),
-          description: 'Farm added successfully',
+          description: `Farm "${newFarm.name.trim()}" added successfully`,
         });
       }
       
@@ -184,9 +184,10 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
       handleCloseDialog();
     } catch (error) {
       console.error('Error saving farm:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: t('common.error'),
-        description: 'Failed to save farm',
+        description: `Failed to save farm: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
@@ -197,24 +198,28 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
   const handleDeleteFarm = async () => {
     if (!deletingFarm) return;
     
+    setSaving(true);
     try {
       const { error } = await farmService.deleteFarm(deletingFarm.id);
       if (error) throw error;
       
       toast({
         title: t('common.success'),
-        description: 'Farm deleted successfully',
+        description: `Farm "${deletingFarm.name}" deleted successfully`,
       });
       
       await loadFarms();
       setDeletingFarm(null);
     } catch (error) {
       console.error('Error deleting farm:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: t('common.error'),
-        description: 'Failed to delete farm',
+        description: `Failed to delete farm: ${errorMessage}`,
         variant: "destructive"
       });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -539,8 +544,13 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
               <Input 
                 value={newFarm.name} 
                 onChange={(e) => setNewFarm(v => ({ ...v, name: e.target.value }))} 
-                placeholder="e.g., North Field" 
+                placeholder="e.g., North Field"
+                maxLength={100}
+                className="transition-all duration-300 focus:ring-2 focus:ring-grass-500"
               />
+              {newFarm.name.length > 80 && (
+                <p className="text-xs text-yellow-600">Name is getting long ({newFarm.name.length}/100 characters)</p>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-3">
@@ -549,14 +559,23 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
                 <Input 
                   type="number" 
                   step="0.1"
+                  min="0.1"
+                  max="10000"
                   value={newFarm.size} 
                   onChange={(e) => setNewFarm(v => ({ ...v, size: e.target.value }))} 
-                  placeholder="0.0" 
+                  placeholder="0.0"
+                  className="transition-all duration-300 focus:ring-2 focus:ring-grass-500"
                 />
+                {parseFloat(newFarm.size) > 1000 && (
+                  <p className="text-xs text-yellow-600">Large farm size detected</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label className="text-sm">{t('profile.unit')}</Label>
-                <Select value={newFarm.unit} onValueChange={(val) => setNewFarm(v => ({ ...v, unit: val }))}>
+                <Select 
+                  value={newFarm.unit} 
+                  onValueChange={(val) => setNewFarm(v => ({ ...v, unit: val }))}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -572,7 +591,10 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label className="text-sm">{t('form.cropType')} *</Label>
-                <Select value={newFarm.cropType} onValueChange={(val) => setNewFarm(v => ({ ...v, cropType: val }))}>
+                <Select 
+                  value={newFarm.cropType} 
+                  onValueChange={(val) => setNewFarm(v => ({ ...v, cropType: val }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t('form.cropType')} />
                   </SelectTrigger>
@@ -585,7 +607,10 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm">{t('form.soilType')} *</Label>
-                <Select value={newFarm.soilType} onValueChange={(val) => setNewFarm(v => ({ ...v, soilType: val }))}>
+                <Select 
+                  value={newFarm.soilType} 
+                  onValueChange={(val) => setNewFarm(v => ({ ...v, soilType: val }))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t('form.soilType')} />
                   </SelectTrigger>
@@ -603,8 +628,13 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
               <Input 
                 value={newFarm.location} 
                 onChange={(e) => setNewFarm(v => ({ ...v, location: e.target.value }))} 
-                placeholder="e.g., Village, District, State" 
+                placeholder="e.g., Village, District, State"
+                maxLength={200}
+                className="transition-all duration-300 focus:ring-2 focus:ring-grass-500"
               />
+              {newFarm.location.length > 150 && (
+                <p className="text-xs text-yellow-600">Location is getting long ({newFarm.location.length}/200 characters)</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-2 pt-4">
@@ -630,14 +660,27 @@ const EnhancedFarmOverview = ({ user }: EnhancedFarmOverviewProps) => {
       <AlertDialog open={!!deletingFarm} onOpenChange={() => setDeletingFarm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Farm</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Farm Deletion</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{deletingFarm?.name}"? This action cannot be undone.
+              Are you sure you want to delete "{deletingFarm?.name}"? This action cannot be undone and will permanently remove all farm data from the database.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteFarm} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction 
+              onClick={handleDeleteFarm} 
+              disabled={saving}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {saving ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Deleting...
+                </div>
+              ) : (
+                t('common.delete')
+              )}
+            </AlertDialogAction>
               {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
