@@ -206,7 +206,7 @@ const translations = {
     'hero.viewDemo': 'View Demo',
     'hero.accuracyRate': 'Accuracy Rate',
     'hero.yieldIncrease': 'Yield Increase',
-    'hero.happyFarmers': 'Happy Farmers',
+    'hero.cropTypesSupported': 'Crop Types Supported',
     
     // Features Section
     'features.title': 'Everything You Need for Smart Farming',
@@ -463,7 +463,7 @@ const translations = {
     'hero.viewDemo': 'डेमो देखें',
     'hero.accuracyRate': 'सटीकता दर',
     'hero.yieldIncrease': 'उपज में वृद्धि',
-    'hero.happyFarmers': 'संतुष्ट किसान',
+    'hero.cropTypesSupported': 'समर्थित फसल प्रकार',
     
     // Features Section
     'features.title': 'स्मार्ट खेती के लिए आपको जो कुछ चाहिए',
@@ -716,7 +716,7 @@ const translations = {
     'hero.viewDemo': 'ਡੇਮੋ ਦੇਖੋ',
     'hero.accuracyRate': 'ਸ਼ੁੱਧਤਾ ਦਰ',
     'hero.yieldIncrease': 'ਫਸਲ ਵਾਧਾ',
-    'hero.happyFarmers': 'ਸੰਤੁਸ਼ਟ ਕਿਸਾਨ',
+    'hero.cropTypesSupported': 'ਸਮਰਥਿਤ ਫਸਲ ਕਿਸਮਾਂ',
     
     // Features Section
     'features.title': 'ਸਮਾਰਟ ਖੇਤੀਬਾੜੀ ਲਈ ਤੁਹਾਨੂੰ ਜੋ ਕੁਝ ਚਾਹੀਦਾ ਹੈ',
