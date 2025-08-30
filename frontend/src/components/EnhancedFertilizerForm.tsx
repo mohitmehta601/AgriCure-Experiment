@@ -770,7 +770,7 @@ const EnhancedFertilizerForm = ({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm">Soil Type (Auto-detected)</Label>
+                <Label className="text-sm">Soil Type (Auto-detected) *</Label>
                 <div className="flex items-center space-x-2">
                   {newFarm.soilData ? (
                     <div className="flex-1 p-2 border rounded-md bg-green-50 border-green-200">
@@ -805,7 +805,7 @@ const EnhancedFertilizerForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm">Location & Soil Detection</Label>
+              <Label className="text-sm">Location & Soil Detection *</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -846,7 +846,7 @@ const EnhancedFertilizerForm = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm">Sowing Date</Label>
+              <Label className="text-sm">Sowing Date *</Label>
               <Input
                 type="date"
                 value={newFarm.sowingDate}
